@@ -1,0 +1,51 @@
+﻿@*
+    //
+    //  Rpre.cshtml
+    //  Affluxis
+    //
+    //  Created by Affluxis on 28/11/2022.
+    //  Copyright © 2022 Affluxis. All rights reserved.
+    //
+*@
+
+<script src="~/js/demo.js"></script>
+<section class="page-title-area bg-cover1">
+    <div class="page-title-wrapper section-spacing">
+        <div class="page-title text-center white-text">
+            <h1 class="heading-1">Sample Record</h1>
+        </div>
+    </div>
+</section>
+<section class="blog-area bg-color1">
+    <div class="blog-wrapper section-spacing" style="padding-top:30px;">
+        <div class="container">
+            <div class="error-page text-center">
+                <a id="rs" href="#" class="btn-style3">Start</a>
+                <br />
+                <span>Click "Start" to start recording.</span>
+                <br /><br />
+                <input id="rjv" maxlength="5" placeholder="Token" />
+                <a id="rv" href="javascript:onView();" autocapitalize="none" autocorrect="off" autocomplete="off" class="btn-style3">View</a>
+                <br />
+                <span>Click "View" to view recording(s).</span>
+                <br /><br />
+                <a href="/sample/">< Back</a>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+    var id = getRnd(5);
+
+    $(function () {
+        $('#rs').attr('href', '/sample/rp/' + id);
+    });
+    function onView() {
+        var str = $('#rjv').val().trim();
+        if (str === '') {
+            alert('Token required.');
+            return;
+        }
+        window.location.href = '/sample/rv/' + str.toLowerCase();
+    }
+</script>

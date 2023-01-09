@@ -1,0 +1,325 @@
+﻿@*
+    //
+    //  Rp.cshtml
+    //  Affluxis
+    //
+    //  Created by Affluxis on 16/09/2022.
+    //  Copyright © 2022 Affluxis. All rights reserved.
+    //
+*@
+
+@using Web.Preso;
+@model PresoBase
+
+<script src="~/js/affluxis.js"></script>
+<script src="~/js/demo.js"></script>
+<style>
+    .box {
+        display: grid;
+        grid-template-columns: repeat(auto-fill,minmax(160px, 1fr));
+        margin: 10px;
+    }
+
+    .recthumb {
+        margin: 10px;
+    }
+</style>
+<section class="page-title-area bg-cover1">
+    <div class="page-title-wrapper section-spacing">
+        <div class="page-title text-center white-text">
+            <h1 class="heading-1">Sample Record</h1>
+        </div>
+    </div>
+</section>
+<section class="blog-area bg-color1">
+    <div class="blog-wrapper section-spacing" style="padding-top:30px;">
+        <div class="container">
+            <div class="error-page text-center">
+                <span id="initBtn">
+                    <a href="javascript:init();" class="btn-style3">Start</a>
+                    <br />
+                </span>
+                <span>Experience cross-platform real-time audio/video recording with thumbnails. Your token is "<span id="vToken"></span>".</span>
+                <br />
+                <div class="container">
+                    <div id="vTop" style="display:none;">
+                        <table align="center">
+                            <tr>
+                                <td align="center" valign="middle">
+                                    <div id="vVidCam"></div>
+                                    <div id="vVidPub"></div>
+                                </td>
+                            </tr>
+                        </table>
+                        <a id="vMuteMicBtn" href="javascript:onMuteMic();" class="btn btn-style3">Mic On</a>
+                        <a id="vMuteCamBtn" href="javascript:onMuteCam();" class="btn btn-style3">Cam On</a>
+                        <a id="vFlipCamBtn" href="#" class="btn btn-style3" data-toggle="modal" data-target="#mediaModal">Flip</a>
+                        <a id="vViewBtn" href="#" target="_blank" class="btn btn-style3">View</a>
+                        <a id="vRecBtn" href="javascript:onRec();" class="btn btn-style3">Record</a>
+                    </div>
+                </div>
+                <div id="vImgs" class="box"></div>
+                <br /><br />
+                <a href="/sample/rpre/">< Back</a>
+            </div>
+        </div>
+    </div>
+</section>
+<div id="mediaModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Affluxis Demo</h4>
+            </div>
+            <div class="modal-body">
+                <div id="mediaTbl"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var isDisabled, isInited, isInitedRec;
+    var isCam, isMic;
+    var isConnected, isConnecting, isRecording;
+    var vCam, vCamNdx, vMic, vMicNdx;
+    var vEntity;
+    var vNc, vNs, vSo;
+    var vToken, vUri, vUrl, vUser;
+    var vVidCam, vVidPub, vVidCamEl, vVidPubEl;
+
+    $(function () {
+        isCam = isMic = true;
+        isDisabled = isInited = isInitedRec = isConnected = isConnecting = isRecording = isRecording = false;
+        vUri = 'ccc.affluxis.com';
+        vUrl = 'https://ccc.affluxis.com:8444/';
+        vToken = '@Model.Token';
+        vUser = Af2Base.getGuidNoDash();
+        vEntity = { name: vUser };
+        vVidCamEl = document.getElementById('vVidCam');
+        vVidPubEl = document.getElementById('vVidPub');
+        vVidCam = new Af2Video();
+        vVidPub = new Af2Video();
+        var rndr = vVidCam.getRenderer();
+        rndr.style.cssText = 'width:50%;';
+        vVidCamEl.appendChild(rndr);
+        Af2System.showSettings(0);
+        $('#vToken').text(vToken);
+        $('#vViewBtn').attr('href', '/sample/rv/' + vToken);
+    });
+    function addCam() {
+        if (isCam === true) {
+            vVidCam.attachVideo(vCam);
+            vNs.attachVideo(vCam);
+        }
+        $(vVidCamEl).show();
+        $(vVidPubEl).hide();
+    }
+    function removeCam() {
+        vVidCam.attachVideo(undefined);
+    }
+    function addNs() {
+        vVidPubEl.innerHTML = '';
+        var rndr = vNs.getRenderer();
+        rndr.style.cssText = 'width:50%;';
+        vVidPubEl.appendChild(rndr);
+        $(vVidCamEl).hide();
+        $(vVidPubEl).show();
+    }
+    function disableBtn(event0, event1) {
+        var el = $('#' + event0 + 'Btn');
+        el.text(event1);
+        el.removeClass('btn btn-style3');
+        el.addClass('btn btn-style3 disabled');
+    }
+    function enableBtn(event0, event1) {
+        var el = $('#' + event0 + 'Btn');
+        el.text(event1);
+        el.removeClass('btn btn-style3 disabled');
+        el.addClass('btn btn-style3');
+    }
+    function disableControls() {
+        isDisabled = true;
+        disableBtn('vFlipCam', 'Flip');
+        disableBtn('vView', 'View');
+        isCam === false ? disableBtn('vMuteCam', 'Cam Off') : disableBtn('vMuteCam', 'Cam On');;
+        isMic === false ? disableBtn('vMuteMic', 'Mic Off') : disableBtn('vMuteMic', 'Mic On');;
+        isRecording === false ? disableBtn('vRec', 'Record') : disableBtn('vRec', 'Unrecord');
+    }
+    function enableControls() {
+        isDisabled = false;
+        enableBtn('vFlipCam', 'Flip');
+        enableBtn('vView', 'View');
+        isCam === false ? enableBtn('vMuteCam', 'Cam Off') : enableBtn('vMuteCam', 'View');
+        isMic === false ? enableBtn('vMuteMic', 'Mic Off') : enableBtn('vMuteMic', 'Mic On');;
+        isRecording === false ? enableBtn('vRec', 'Record') : enableBtn('vRec', 'Unrecord');
+    }
+    function onMuteCam() {
+        if (isDisabled === true) return;
+        vNs.attachVideo(isCam === false ? vCam : undefined);
+        vVidCam.attachVideo(isCam === false && isRecording === false ? vCam : undefined);
+        enableBtn('vMuteCam', isCam === false ? 'Cam On' : 'Cam Off');
+        isCam = !isCam;
+    }
+    function onMuteMic() {
+        if (isDisabled === true) return;
+        vNs.attachAudio(isMic === false ? vMic : undefined);
+        enableBtn('vMuteMic', isMic === false ? 'Mic On' : 'Mic Off');
+        isMic = !isMic;
+    }
+    function onCamSel(event) {
+        vCamNdx = event;
+        if (vCamNdx === vCam.index) return;
+        vCam = Af2Camera.get(vCamNdx);
+        vCam.setMode(800, 600, 30);
+        vCam.setQuality(300000);
+        vVidCam.attachVideo(isCam === true && isRecording === false ? vCam : undefined);
+        vNs.attachVideo(isCam === true ? vCam : undefined);
+    }
+    function onMicSel(event) {
+        vMicNdx = event;
+        if (vMicNdx === vMic.index) return;
+        vMic = Af2Microphone.get(vMicNdx);
+        if (isMic === true) vNs.attachAudio(vMic);
+    }
+    function onRec() {
+        if (isDisabled === true) return;
+        removeCam();
+        disableControls();
+        vNs.publish(isRecording === false ? vUser : false);
+    }
+    function appendImg(event) {
+        var imgVid = getImgVid(event);
+        $('#vImgs').append('<div class="recthumb"><a href="' + imgVid.vid + '" target="_blank"><img src="' + imgVid.img + '" /></a></div>');
+    }
+    function prependImg(event) {
+        var imgVid = getImgVid(event);
+        $('#vImgs').prepend('<div class="recthumb"><a href="' + imgVid.vid + '" target="_blank"><img src="' + imgVid.img + '" /></a></div>');
+    }
+    function getImgVid(event) {
+        var baseUrl = vUrl + 'client2/affluxis/sample_rec/';
+        var img = baseUrl + 'snapshots/' + vToken + '/' + event.name;
+        var vid = baseUrl + 'streams/' + vToken + '/' + event.video;
+        return { img: img, vid: vid };
+    }
+    function init() {
+        $('#initBtn').hide();
+        $('#vTop').show();
+        initNc();
+    }
+    function initInst() {
+        isRecording = false;
+        enableBtn('vRec', 'Record');
+        vNs = new Af2NetStream(vNc);
+        if (isCam === true) vNs.attachVideo(vCam);
+        if (isMic === true) vNs.attachAudio(vMic);
+        vNs.onStatus = function (info) {
+            isRecording = info.code === Af2Constants.AF2_NETSTREAM_PUBLISH_START;
+            if (info.code === Af2Constants.AF2_NETSTREAM_PUBLISH_START) vNc.call('initRec', false, vEntity);
+            if (info.code === Af2Constants.AF2_NETSTREAM_UNPUBLISH_SUCCESS) vNc.call('uninitRec', false, vEntity);
+        };
+        vSo = Af2SharedObject.get('rec', true);
+        vSo.onSync = function (info) {
+            if (info.code !== 'change') return;
+            thumbs = vSo.data['recs']['recs'];
+            if (thumbs.length === 0) return;
+            if (isInitedRec === false) {
+                isInitedRec = true;
+                thumbs.sort(compare);
+                for (var i in thumbs) appendImg(thumbs[i]);
+                return;
+            }
+            prependImg(thumbs[thumbs.length - 1]);
+        };
+        vSo.connect(vNc);
+        enableControls();
+        setTimeout(function () {
+            if (vCam === undefined) {
+                vCam = Af2Camera.get();
+                vCam.setMode(800, 600, 30);
+                vCam.setQuality(1250000);
+                vMic = Af2Microphone.get();
+                addCam();
+            }
+        }, 1 * 1000);
+        if (isInited === true) return;
+        isInited = true;
+        var first = false;
+        var cams = Af2Camera.names;
+        var mics = Af2Microphone.names;
+        var html = '<span><strong>Camera</strong></span>';
+        html += '<table width="100%">';
+        for (var i in cams) {
+            html += '<tr><td><label>';
+            if (first === false) {
+                first = true;
+                html += '<input name="cam" type="radio" onChange="javascript:onCamSel(' + i + ');" checked />';
+            } else {
+                html += '<input name="cam" type="radio" onChange="javascript:onCamSel(' + i + ');" />';
+            }
+            html += ' ' + cams[i] + '</label></td></tr>';
+        }
+        html += '</table>';
+        html += '<br />';
+        html += '<span><strong>Microphone</strong></span>';
+        html += '<table width="100%">';
+        first = false;
+        for (var i in mics) {
+            html += '<tr><td><label>';
+            if (first === false) {
+                first = true;
+                html += '<input name="mic" type="radio" onChange="javascript:onMicSel(' + i + ');" checked />';
+            } else {
+                html += '<input name="mic" type="radio" onChange="javascript:onMicSel(' + i + ');" />';
+            }
+            html += ' ' + mics[i] + '</label></td></tr>';
+        }
+        html += '</table>';
+        $('#mediaTbl').html(html);
+    }
+    function initNc() {
+        disableControls();
+        isConnecting = true;
+        vNc = new Af2NetConnection();
+        vNc.onResult = function (info) {
+            console.log(info);
+            switch (info.method) {
+                case 'initRec':
+                    enableControls();
+                    enableBtn('vRec', 'Unrecord');
+                    addNs();
+                    break;
+                case 'uninitRec':
+                    enableBtn('vRec', 'Record');
+                    enableControls();
+                    addCam();
+                    break;
+            }
+        };
+        vNc.onStatus = function (event) {
+            isConnected = false;
+            if (event.code !== Af2Constants.AF2_NETCONNECTION_CONNECT_SUCCESS) {
+                isConnecting = false;
+                alert('No Internet connection.');
+                initNc();
+                return;
+            }
+            if (event.code === Af2Constants.AF2_NETCONNECTION_CONNECT_INVALID_APP) {
+                isConnecting = false;
+                alert('Invalid token.');
+                return;
+            }
+            isConnecting = false;
+            isConnected = true;
+            initInst();
+        };
+        vNc.connect(vUri + '/sample_rec/' + vToken, vEntity);
+    }
+    function compare(a, b) {
+        if (a.created > b.created) return -1;
+        if (a.created < b.created) return 1;
+        return 0;
+    }
+</script>

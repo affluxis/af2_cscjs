@@ -1,0 +1,267 @@
+﻿@*
+    //
+    //  Avp.cshtml
+    //  Affluxis
+    //
+    //  Created by Affluxis on 08/11/2022.
+    //  Copyright © 2022 Affluxis. All rights reserved.
+    //
+*@
+
+@using Web.Preso;
+@model PresoBase
+
+<script src="~/js/affluxis.js"></script>
+<script src="~/js/demo.js"></script>
+<style>
+    .box {
+        display: grid;
+        grid-template-columns: repeat(auto-fill,minmax(160px, 1fr));
+        margin: 10px;
+        padding: 10px;
+    }
+</style>
+<section class="page-title-area bg-cover1">
+    <div class="page-title-wrapper section-spacing">
+        <div class="page-title text-center white-text">
+            <h1 class="heading-1">Demo AVChat</h1>
+        </div>
+    </div>
+</section>
+<section class="blog-area bg-color1">
+    <div class="blog-wrapper section-spacing" style="padding-top:30px;">
+        <div class="container">
+            <div class="error-page text-center">
+                <span id="initBtn">
+                    <a href="javascript:init();" class="btn-style3">Start</a>
+                    <br />
+                </span>
+                <span>Experience cross-platform real-time audio/video for multiple users. Your token is "<span id="vToken"></span>".</span>
+                <table id="vTop" align="center" style="display:none;">
+                    <tr>
+                        <td align="center" valign="middle"><div id="vNses" class="box"></div></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span id="vParticipants"></span><br />
+                            <a id="vMuteMicBtn" href="javascript:onMuteMic();" class="btn btn-style3">Mic On</a>
+                            <a id="vMuteCamBtn" href="javascript:onMuteCam();" class="btn btn-style3">Cam On</a>
+                            <a id="vFlipCamBtn" href="#" class="btn btn-style3" data-toggle="modal" data-target="#mediaModal">Flip</a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+<div id="mediaModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Affluxis Demo</h4>
+            </div>
+            <div class="modal-body">
+                <div id="mediaTbl"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var isCam, isMic;
+    var isConnected, isConnecting, isDisabled, isInited, isPublishing;
+    var vCam, vCamNdx;
+    var vMic, vMicNdx;
+    var vNc, vNses, vNsesEl, vNsPub;
+    var vEntity, vSoUser, vToken, vUri, vUser;
+
+    $(function () {
+        isCam = isMic = true;
+        isDisabled = isConnected = isConnecting = isInited = isPublishing = false;
+        isMobile = Af2Base.getIsMobile();
+        vUri = 'ccc.affluxis.com';
+        vToken = '@Model.Token';
+        vUser = Af2Base.getGuidNoDash();
+        vEntity = { name: vUser };
+        vNses = {};
+        vNsesEl = document.getElementById('vNses');
+        Af2System.showSettings(0);
+        $('#vToken').text(vToken);
+    });
+    $(window).blur(function () {
+        if (isPublishing === true && isMobile === true) onPub();
+    });
+    function disableBtn(event0, event1) {
+        var el = $('#' + event0 + 'Btn');
+        el.text(event1);
+        el.removeClass('btn btn-style3');
+        el.addClass('btn btn-style3 disabled');
+    }
+    function enableBtn(event0, event1) {
+        var el = $('#' + event0 + 'Btn');
+        el.text(event1);
+        el.removeClass('btn btn-style3 disabled');
+        el.addClass('btn btn-style3');
+    }
+    function disableControls() {
+        isDisabled = true;
+        disableBtn('vFlipCam', 'Flip');
+        disableBtn('vMuteCam', isCam === false ? 'Cam Off' : 'Cam On');
+        disableBtn('vMuteMic', isMic === false ? 'Mic Off' : 'Mic On');
+    }
+    function enableControls() {
+        isDisabled = false;
+        enableBtn('vFlipCam', 'Flip');
+        enableBtn('vMuteCam', isCam === false ? 'Cam Off' : 'Cam On');
+        enableBtn('vMuteMic', isMic === false ? 'Mic Off' : 'Mic On');
+    }
+    function onMuteCam() {
+        if (isDisabled === true) return;
+        vNsPub.attachVideo(isCam === true ? undefined : vCam);
+        enableBtn('vMuteCam', isCam === true ? 'Cam Off' : 'Cam On');
+        isCam = !isCam;
+    }
+    function onMuteMic() {
+        if (isDisabled === true) return;
+        enableBtn('vMuteMic', isMic === true ? 'Mic Off' : 'Mic On');
+        vNsPub.attachAudio(isMic === true ? undefined : vMic);
+        isMic = !isMic;
+    }
+    function onCamSel(event) {
+        vCamNdx = event;
+        if (vCamNdx === vCam.index) return;
+        vCam = Af2Camera.get(vCamNdx);
+        vCam.setMode(800, 600, 30);
+        vCam.setQuality(300000);
+        if (isCam === true) vNsPub.attachVideo(vCam);
+    }
+    function onMicSel(event) {
+        vMicNdx = event;
+        if (vMicNdx === vMic.index) return;
+        vMic = Af2Microphone.get(vMicNdx);
+        if (isMic === true) vNsPub.attachAudio(vMic);
+    }
+    function onPub() {
+        vNsPub.publish(vUser);
+    }
+    function appendNs(event) {
+        if (vNses[event] !== undefined) return;
+        var ns = new Af2NetStream(vNc);
+        ns.onStatus = function (info) {
+            if (info.code !== 'Af2NetStream.Play.Start') {
+                removeNs(info.name);
+                return;
+            }
+            var rndr = this.getRenderer();
+            vNses[info.name] = { ns: ns, rndr: rndr };
+            rndr.muted = info.name === vEntity['name'] ? true : false;
+            rndr.style.cssText = 'border:1px solid;margin:10px;padding:10px;width:100%;';
+            vNsesEl.appendChild(rndr);
+        };
+        ns.play(event);
+    }
+    function removeNs(event) {
+        if (vNses[event] === undefined) return;
+        var ns = vNses[event]['ns'];
+        var rndr = vNses[event]['rndr'];
+        vNsesEl.removeChild(rndr);
+        ns.play(false);
+        delete vNses[event];
+    }
+    function init() {
+        $('#initBtn').hide();
+        $('#vTop').show();
+        initNc();
+    }
+    function initInst() {
+        isPublishing = false;
+        if (vCam === undefined) {
+            vCam = Af2Camera.get();
+            vCam.setMode(800, 600, 30);
+            vCam.setQuality(300000);
+            vMic = Af2Microphone.get();
+        }
+        vNsPub = new Af2NetStream(vNc);
+        if (isCam === true) vNsPub.attachVideo(vCam);
+        if (isMic === true) vNsPub.attachAudio(vMic);
+        vNsPub.onStatus = function (info) {
+            isPublishing = info.code === Af2Constants.AF2_NETSTREAM_PUBLISH_START;
+            if (info.code === Af2Constants.AF2_NETSTREAM_PUBLISH_START) vNc.call('initPub', true, vEntity);
+            if (info.code === Af2Constants.AF2_NETSTREAM_UNPUBLISH_SUCCESS) vNc.call('uninitPub', true, vEntity);
+        };
+        vSoUser = Af2SharedObject.get('users');
+        vSoUser.onSync = function (info) {
+            if (info.code !== 'change') return;
+            var users = vSoUser['data']['users'];
+            $('#vParticipants').text('Participants: ' + Object.keys(users).length);
+            for (var i in users) if (vNses[i] === undefined) appendNs(i);
+            for (var i in vNses) if (users[i] === undefined) removeNs(i);
+        };
+        vSoUser.connect(vNc);
+        setTimeout(function () {
+            onPub();
+        }, 1 * 1000);
+        if (isInited === true) return;
+        isInited = true;
+        var first = false;
+        var cams = Af2Camera.names;
+        var mics = Af2Microphone.names;
+        var html = '<span><strong>Camera</strong></span>';
+        html += '<table width="100%">';
+        for (var i in cams) {
+            html += '<tr><td><label>';
+            if (first === false) {
+                first = true;
+                html += '<input name="cam" type="radio" onChange="javascript:onCamSel(' + i + ');" checked />';
+            } else {
+                html += '<input name="cam" type="radio" onChange="javascript:onCamSel(' + i + ');" />';
+            }
+            html += ' ' + cams[i] + '</label></td></tr>';
+        }
+        html += '</table>';
+        html += '<br />';
+        html += '<span><strong>Microphone</strong></span>';
+        html += '<table width="100%">';
+        first = false;
+        for (var i in mics) {
+            html += '<tr><td><label>';
+            if (first === false) {
+                first = true;
+                html += '<input name="mic" type="radio" onChange="javascript:onMicSel(' + i + ');" checked />';
+            } else {
+                html += '<input name="mic" type="radio" onChange="javascript:onMicSel(' + i + ');" />';
+            }
+            html += ' ' + mics[i] + '</label></td></tr>';
+        }
+        html += '</table>';
+        $('#mediaTbl').html(html);
+    }
+    function initNc() {
+        disableControls();
+        isConnecting = true;
+        vNc = new Af2NetConnection();
+        vNc.onResult = function (info) {
+            if (info.method === 'initPub') enableControls();
+        };
+        vNc.onStatus = function (event) {
+            isConnected = false;
+            if (event.code !== Af2Constants.AF2_NETCONNECTION_CONNECT_SUCCESS) {
+                isConnecting = false;
+                alert('No Internet connection.');
+                initNc();
+                return;
+            }
+            if (event.code === Af2Constants.AF2_NETCONNECTION_CONNECT_INVALID_APP) {
+                isConnecting = false;
+                alert('Invalid token.');
+                return;
+            }
+            isConnecting = false;
+            isConnected = true;
+            initInst();
+        };
+        vNc.connect(vUri + '/av/' + vToken, vEntity);
+    }
+</script>

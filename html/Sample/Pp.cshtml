@@ -1,0 +1,278 @@
+﻿@*
+    //
+    //  Pp.cshtml
+    //  Affluxis
+    //
+    //  Created by Affluxis on 30/11/2022.
+    //  Copyright © 2022 Affluxis. All rights reserved.
+    //
+*@
+
+@using Web.Preso;
+@model PresoBase
+
+<script src="~/js/affluxis.js"></script>
+<script src="~/js/demo.js"></script>
+<section class="page-title-area bg-cover1">
+    <div class="page-title-wrapper section-spacing">
+        <div class="page-title text-center white-text">
+            <h1 class="heading-1">Sample Playlist</h1>
+        </div>
+    </div>
+</section>
+<section class="blog-area bg-color1">
+    <div class="blog-wrapper section-spacing" style="padding-top:30px;">
+        <div class="container">
+            <div class="error-page text-center">
+                <span id="initBtn">
+                    <a href="javascript:init();" class="btn-style3">Start</a>
+                    <br />
+                </span>
+                <span>Experience cross-platform real-time audio/video playlist with layouts and overlays. Your token is "<span id="vToken"></span>".</span>
+                <br /><br />
+                <div class="container">
+                    <div id="vTop" style="display:none;">
+                        <div id="vVidNs"></div>
+                        <br />
+                        <a id="vLayoutBtn" href="#" class="btn btn-style3" data-toggle="modal" data-target="#layoutModal">Layout</a>
+                        <a id="vViewBtn" href="#" target="_blank" class="btn btn-style3">View</a>
+                        <a id="vOverlayBtn" href="#" class="btn btn-style3" data-toggle="modal" data-target="#overlayModal">Overlay</a>
+                    </div>
+                </div>
+                <br /><br />
+                <a href="/sample/ppre/">< Back</a>
+            </div>
+        </div>
+    </div>
+</section>
+<div id="layoutModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Affluxis Sample</h4>
+            </div>
+            <div class="modal-body">
+                <table width="100%">
+                    <tr>
+                        <td>
+                            <label><input id="isAspect" type="checkbox" onchange="javascript:onLayout();" /> Aspect Ratio</label>
+                        </td>
+                        <td align="right">
+                            <label><input id="isPip" type="checkbox" onchange="javascript:onLayout();" /> Picture-in-Picture</label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" colspan="2">
+                            <label>
+                                <img id="vPip_0" src="~/images/layout/0_.png" />
+                                <br />
+                                <input id="vLyt0" name="layout" type="radio" onChange="javascript:onLayout('0');" checked />
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" colspan="2">
+                            <label>
+                                <img id="vPip_1" src="~/images/layout/1_.png" />
+                                <br />
+                                <input id="vLyt1" name="layout" type="radio" onChange="javascript:onLayout('1');" />
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" colspan="2">
+                            <label>
+                                <img id="vPip_2" src="~/images/layout/2_.png" />
+                                <br />
+                                <input id="vLyt2" name="layout" type="radio" onChange="javascript:onLayout('2');" />
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" colspan="2">
+                            <label>
+                                <img id="vPip_3" src="~/images/layout/3_.png" />
+                                <br />
+                                <input id="vLyt3" name="layout" type="radio" onChange="javascript:onLayout('3');" />
+                            </label>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="overlayModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Affluxis Sample</h4>
+            </div>
+            <div class="modal-body">
+                <table width="100%">
+                    <tr>
+                        <td align="center">
+                            <a id="vOverlay0Btn" href="javascript:onOverlay('0');" class="btn btn-style3">Overlay 1</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center">
+                            <a id="vOverlay1Btn" href="javascript:onOverlay('1');" class="btn btn-style3">Overlay 2</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center">
+                            <a id="vOverlay2Btn" href="javascript:onOverlay('2');" class="btn btn-style3">Overlay 3</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center">
+                            <a id="vOverlay3Btn" href="javascript:onOverlay('3');" class="btn btn-style3">Overlay 4</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center">
+                            <a id="vOverlay4Btn" href="javascript:onOverlay('4');" class="btn btn-style3">Overlay 5</a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var isConnected, isConnecting, isDisabled;
+    var vEntity;
+    var vNc, vNs;
+    var vVidNsPlayEl;
+    var vSoLyt, vSoOvrl;
+    var vUri, vUser, vVidNs;
+
+    $(function () {
+        isConnected = isConnecting = isDisabled = false;
+        vUri = 'bbb.affluxis.com';
+        vToken = '@Model.Token';
+        vUser = Af2Base.getGuidNoDash();
+        vEntity = { name: vUser, protocol: 'webrtc' };
+        vVidNsPlayEl = document.getElementById('vVidNs');
+        vVidNs = new Af2Video();
+        $('#vToken').text(vToken);
+        $('#vViewBtn').attr('href', '/sample/pv/' + vToken);
+    });
+    function disableBtn(event0, event1) {
+        var el = $('#' + event0 + 'Btn');
+        el.text(event1);
+        el.removeClass('btn btn-style3');
+        el.addClass('btn btn-style3 disabled');
+    }
+    function enableBtn(event0, event1) {
+        var el = $('#' + event0 + 'Btn');
+        el.text(event1);
+        el.removeClass('btn btn-style3 disabled');
+        el.addClass('btn btn-style3');
+    }
+    function disableControls() {
+        isDisabled = true;
+        disableBtn('vLayout', 'Layout');
+        disableBtn('vOverlay', 'Overlay');
+        disableBtn('vView', 'View');
+    }
+    function enableControls() {
+        isDisabled = false;
+        enableBtn('vLayout', 'Layout');
+        enableBtn('vOverlay', 'Overlay');
+        enableBtn('vView', 'View');
+    }
+    function onLayout(event) {
+        if (event !== undefined) vLyt = event;
+        var isAspect = document.getElementById('isAspect').checked;
+        var isPip = document.getElementById('isPip').checked;
+        vNc.call('initLyt', false, { isAspect: isAspect, isPip: isPip, lyt: vLyt, });
+    }
+    function onOverlay(event) {
+        vNc.call('initOverlay', true, { name: event });
+    }
+    function init() {
+        $('#initBtn').hide();
+        $('#vTop').show();
+        initNc();
+    }
+    function initInst() {
+        vNs = new Af2NetStream(vNc);
+        vNs.onStatus = function (info) {
+            console.log(info.code);
+            vVidNsPlayEl.innerHTML = '';
+            var rndr = this.getRenderer();
+            rndr.controls = true;
+            rndr.style.cssText = 'width:100%;';
+            vVidNsPlayEl.appendChild(rndr);
+        };
+        vSoLyt = Af2SharedObject.get('lyt');
+        vSoLyt.onSync = function (info) {
+            if (info.code !== 'change') return;
+            vLyt = vSoLyt.data['lyt']['lyt'];
+            var src = '/images/layout/';
+            var isPip = vSoLyt.data['lyt']['isPip'];
+            $('#vPip_0').attr('src', src + '0_.png');
+            $('#vPip_1').attr('src', src + '1_.png');
+            $('#vPip_2').attr('src', src + '2_.png');
+            $('#vPip_3').attr('src', src + '3_.png');
+            if (isPip === true) {
+                $('#vPip_0').attr('src', src + '0_p.png');
+                $('#vPip_1').attr('src', src + '1_p.png');
+                $('#vPip_2').attr('src', src + '2_p.png');
+                $('#vPip_3').attr('src', src + '3_p.png');
+            }
+            $('#isAspect').prop('checked', vSoLyt.data['lyt']['isAspect']);
+            $('#isPip').prop('checked', isPip);
+            $('#vLyt' + vLyt).prop('checked', true);
+        };
+        vSoLyt.connect(vNc);
+        vSoOvrl = Af2SharedObject.get('ovr');
+        vSoOvrl.onSync = function (info) {
+            if (info.code !== 'change') return;
+            var c = vSoOvrl.data['ovr'];
+            console.log(c);
+            for (var i = 0; i < 5; i++) {
+                var s0 = 'vOverlay' + i;
+                var s1 = c['status'][i] === true ? 'Overlay ' + (i + 1) : 'Unoverlay ' + (i + 1);
+                c.enabled === false ? disableBtn(s0, s1) : enableBtn(s0, s1);
+            }
+        };
+        vSoOvrl.connect(vNc);
+        setTimeout(function () {
+            vNs.play('live');
+            vNc.call('initBg');
+        }, 3 * 1000);
+        enableControls();
+    }
+    function initNc() {
+        disableControls();
+        isConnecting = true;
+        vNc = new Af2NetConnection();
+        vNc.onStatus = function (event) {
+            isConnected = false;
+            if (event.code !== Af2Constants.AF2_NETCONNECTION_CONNECT_SUCCESS) {
+                isConnecting = false;
+                alert('No Internet connection.');
+                initNc();
+                return;
+            }
+            if (event.code === Af2Constants.AF2_NETCONNECTION_CONNECT_INVALID_APP) {
+                isConnecting = false;
+                alert('Invalid token.');
+                return;
+            }
+            isConnecting = false;
+            isConnected = true;
+            initInst();
+        };
+        vNc.connect(vUri + '/sample_playlist/' + vToken, vEntity);
+    }
+</script>

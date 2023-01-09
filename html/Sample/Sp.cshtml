@@ -1,0 +1,175 @@
+﻿@*
+    //
+    //  Sp.cshtml
+    //  Affluxis
+    //
+    //  Created by Affluxis on 01/12/2022.
+    //  Copyright © 2022 Affluxis. All rights reserved.
+    //
+*@
+
+@using Web.Preso;
+@model PresoBase
+
+<script src="~/js/affluxis.js"></script>
+<script src="~/js/demo.js"></script>
+<section class="page-title-area bg-cover1">
+    <div class="page-title-wrapper section-spacing">
+        <div class="page-title text-center white-text">
+            <h1 class="heading-1">Sample Screen</h1>
+        </div>
+    </div>
+</section>
+<section class="blog-area bg-color1">
+    <div class="blog-wrapper section-spacing" style="padding-top:30px;">
+        <div class="container">
+            <div class="error-page text-center">
+                <span id="initBtn">
+                    <a href="javascript:init();" class="btn-style3">Start</a>
+                    <br />
+                </span>
+                <span>Experience cross-desktop real-time screen publishing with viewing. Your token is "<span id="vToken"></span>".</span>
+                <br />
+                <div class="container">
+                    <div id="vTop" style="display:none;">
+                        <table align="center">
+                            <tr>
+                                <td align="center" valign="middle">
+                                    <div id="vVidNs"></div>
+                                </td>
+                            </tr>
+                        </table>
+                        <a id="vViewBtn" href="#" target="_blank" class="btn btn-style3">View</a>
+                        <a id="vScreenBtn" href="javascript:onScreen();" class="btn btn-style3">Screen</a>
+                    </div>
+                </div>
+                <br /><br />
+                <a href="/sample/spre/">< Back</a>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+    var isConnected, isConnecting, isDisabled, isMobile, isScreening;
+    var vEntity, vEntityScreen;
+    var vNc, vNsScreen, vNsPlay, vVidNs, vSo, vVidNsPlayEl;
+    var vUri, vUser;
+
+    $(function () {
+        isDisabled = isConnected = isConnecting = isScreening = false;
+        isMobile = Af2Base.getIsMobile();
+        vUri = 'ccc.affluxis.com';
+        vToken = '@Model.Token';
+        vUser = Af2Base.getGuidNoDash();
+        vEntity = { name: vUser, protocol: 'webrtc' };
+        vEntityScreen = { name: vUser + 'screen' };
+        vVidNsPlayEl = document.getElementById('vVidNs');
+        vVidNs = new Af2Video();
+        Af2System.showSettings(0);
+        $('#vToken').text(vToken);
+        $('#vViewBtn').attr('href', '/sample/sv/' + vToken);
+    });
+    function disableBtn(event0, event1) {
+        var el = $('#' + event0 + 'Btn');
+        el.text(event1);
+        el.removeClass('btn btn-style3');
+        el.addClass('btn btn-style3 disabled');
+    }
+    function enableBtn(event0, event1) {
+        var el = $('#' + event0 + 'Btn');
+        el.text(event1);
+        el.removeClass('btn btn-style3 disabled');
+        el.addClass('btn btn-style3');
+    }
+    function disableControls() {
+        isDisabled = true;
+        isScreening === true ? disableBtn('vScreen', 'Unscreen') : disableBtn('vScreen', 'Screen');
+    }
+    function enableControls() {
+        isDisabled = false;
+        isScreening === true ? enableBtn('vScreen', 'Unscreen') : enableBtn('vScreen', 'Screen');
+    }
+    function onScreen() {
+        if (isDisabled === true) return;
+        if (isMobile === true) {
+            alert('Screen publishing is available only for desktop browsers.');
+            return;
+        }
+        var cmd = vUser + 'screen';
+        disableControls();
+        if (isScreening === true) cmd = false;
+        vNsScreen.publish(cmd, {});
+    }
+    function init() {
+        $('#initBtn').hide();
+        $('#vTop').show();
+        initNc();
+    }
+    function initInst() {
+        enableBtn('vPub', 'Publish');
+        vNsPlay = new Af2NetStream(vNc);
+        vNsPlay.onStatus = function (info) {
+            console.log(info.code);
+            vVidNsPlayEl.innerHTML = '';
+            var rndr = this.getRenderer();
+            if (rndr === undefined) return;
+            rndr.controls = true;
+            rndr.style.cssText = 'width:50%;';
+            vVidNsPlayEl.appendChild(rndr);
+        };
+        vNsScreen = new Af2NetStream(vNc);
+        vNsScreen.onStatus = function (info) {
+            console.log('screen: ' + info.code);
+            if (info.code === Af2Constants.AF2_NETSTREAM_PUBLISH_BAD_NAME) {
+                enableControls();
+                return;
+            }
+            isScreening = info.code === Af2Constants.AF2_NETSTREAM_PUBLISH_START;
+            if (info.code === Af2Constants.AF2_NETSTREAM_PUBLISH_START) vNc.call('initScreen', true, vEntityScreen);
+            if (info.code === Af2Constants.AF2_NETSTREAM_UNPUBLISH_SUCCESS) vNc.call('uninitScreen', true, vEntityScreen);
+        };
+        vSo = Af2SharedObject.get('screen');
+        vSo.onSync = function (info) {
+            if (info.code !== 'change') return;
+            vNsPlay.play(vSo.data['screen']['isScreen']);
+        };
+        vSo.connect(vNc);
+        enableControls();
+    }
+    function initNc() {
+        disableControls();
+        isConnecting = true;
+        vNc = new Af2NetConnection();
+        vNc.onResult = function (info) {
+            console.log(info.method);
+            switch (info.method) {
+                case 'initScreen':
+                    enableControls();
+                    enableBtn('vScreen', 'Unscreen');
+                    break;
+                case 'uninitScreen':
+                    enableBtn('vScreen', 'Screen');
+                    enableControls();
+                    break;
+            }
+        };
+        vNc.onStatus = function (event) {
+            isConnected = false;
+            if (event.code !== Af2Constants.AF2_NETCONNECTION_CONNECT_SUCCESS) {
+                isConnecting = false;
+                alert('No Internet connection.');
+                initNc();
+                return;
+            }
+            if (event.code === Af2Constants.AF2_NETCONNECTION_CONNECT_INVALID_APP) {
+                isConnecting = false;
+                alert('Invalid token.');
+                return;
+            }
+            isConnecting = false;
+            isConnected = true;
+            initInst();
+        };
+        vNc.connect(vUri + '/sample_screen/' + vToken, vEntity);
+    }
+</script>

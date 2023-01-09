@@ -1,0 +1,492 @@
+﻿@*
+    //
+    //  Lp.cshtml
+    //  Affluxis
+    //
+    //  Created by Affluxis on 16/09/2022.
+    //  Copyright © 2022 Affluxis. All rights reserved.
+    //
+*@
+
+@using Web.Preso;
+@model PresoBase
+
+<script src="~/js/affluxis.js"></script>
+<script src="~/js/demo.js"></script>
+<section class="page-title-area bg-cover1">
+    <div class="page-title-wrapper section-spacing">
+        <div class="page-title text-center white-text">
+            <h1 class="heading-1">Demo Live</h1>
+        </div>
+    </div>
+</section>
+<section class="blog-area bg-color1">
+    <div class="blog-wrapper section-spacing" style="padding-top:30px;">
+        <div class="container">
+            <div class="error-page text-center">
+                <span id="initBtn">
+                    <a href="javascript:init();" class="btn-style3">Start</a>
+                    <br />
+                </span>
+                <span>Experience cross-platform real-time audio/video streaming with multiple publishers/viewers. Your token is "<span id="vToken"></span>".</span>
+                <br /><br />
+                <div class="layout-wrapper section-spacing bminus-30" style="padding-top:0px;">
+                    <div class="container">
+                        <div id="vTop" class="row" style="display:none;">
+                            <div class="col-md-6">
+                                <table align="center">
+                                    <tr>
+                                        <td align="center" valign="middle">
+                                            <div id="vVidCam"></div>
+                                            <div id="vVidPub"></div>
+                                        </td>
+                                    </tr>
+                                </table>
+                                <a id="vMuteMicBtn" href="javascript:onMuteMic();" class="btn btn-style3">Mic On</a>
+                                <a id="vMuteCamBtn" href="javascript:onMuteCam();" class="btn btn-style3">Cam On</a>
+                                <a id="vFlipCamBtn" href="#" class="btn btn-style3" data-toggle="modal" data-target="#mediaModal">Flip</a>
+                                <a id="vScreenBtn" href="javascript:onScreen();" class="btn btn-style3">Screen</a>
+                                <a id="vPubBtn" href="javascript:onPub();" class="btn btn-style3">Publish</a>
+                            </div>
+                            <div class="col-md-6 preview-wrapper fullWidth">
+                                <div id="vVidNs"></div>
+                                <span id="vInfo"></span>
+                                <br />
+                                <a href="#" class="btn btn-style3" data-toggle="modal" data-target="#layoutModal">Layout</a>
+                                <a href="#" class="btn btn-style3" data-toggle="modal" data-target="#overlayModal">Overlay</a>
+                                <a id="vViewBtn" href="#" target="_blank" class="btn btn-style3">View</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<div id="layoutModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Affluxis Demo</h4>
+            </div>
+            <div class="modal-body">
+                <table width="100%">
+                    <tr>
+                        <td>
+                            <label><input id="isAspect" type="checkbox" onchange="javascript:onLayout();" /> Aspect Ratio</label>
+                        </td>
+                        <td align="right">
+                            <label><input id="isPip" type="checkbox" onchange="javascript:onLayout();" /> Picture-in-Picture</label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" colspan="2">
+                            <label>
+                                <img id="vPip_0" src="~/images/layout/0_.png" />
+                                <br />
+                                <input id="vLyt0" name="layout" type="radio" onChange="javascript:onLayout('0');" checked />
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" colspan="2">
+                            <label>
+                                <img id="vPip_1" src="~/images/layout/1_.png" />
+                                <br />
+                                <input id="vLyt1" name="layout" type="radio" onChange="javascript:onLayout('1');" />
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" colspan="2">
+                            <label>
+                                <img id="vPip_2" src="~/images/layout/2_.png" />
+                                <br />
+                                <input id="vLyt2" name="layout" type="radio" onChange="javascript:onLayout('2');" />
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" colspan="2">
+                            <label>
+                                <img id="vPip_3" src="~/images/layout/3_.png" />
+                                <br />
+                                <input id="vLyt3" name="layout" type="radio" onChange="javascript:onLayout('3');" />
+                            </label>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="mediaModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Affluxis Demo</h4>
+            </div>
+            <div class="modal-body">
+                <div id="mediaTbl"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="overlayModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Affluxis Demo</h4>
+            </div>
+            <div class="modal-body">
+                <table width="100%">
+                    <tr>
+                        <td align="center">
+                            <a id="vOverlay0Btn" href="javascript:onOverlay('0');" class="btn btn-style3">Overlay 1</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center">
+                            <a id="vOverlay1Btn" href="javascript:onOverlay('1');" class="btn btn-style3">Overlay 2</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center">
+                            <a id="vOverlay2Btn" href="javascript:onOverlay('2');" class="btn btn-style3">Overlay 3</a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var isInited;
+    var isCam, isMic;
+    var isConnected, isConnecting;
+    var isDisabled, isMobile;
+    var isPublishing, isScreening;
+    var vCam, vCamNdx;
+    var vEntity, vEntityScreen;
+    var vMic, vMicNdx;
+    var vNc, vNsPlay, vVidNsPlayEl, vNsPub, vNsScreen;
+    var vSo, vSoLyt, vSoOvrl;
+    var vLytvVidCam, vUri, vUser, vVidNs;
+
+    $(function () {
+        isCam = isMic = true;
+        isDisabled = isInited = isConnected = isConnecting = isMobile = isPublishing = isScreening = false;
+        isMobile = Af2Base.getIsMobile();
+        vUri = 'ccc.affluxis.com';
+        vToken = '@Model.Token';
+        vUser = Af2Base.getGuidNoDash();
+        vEntity = { name: vUser, protocol: 'webrtc' };
+        vEntityScreen = { name: vUser + 'screen' };
+        vVidCamEl = document.getElementById('vVidCam');
+        vVidNsPlayEl = document.getElementById('vVidNs');
+        vVidPubEl = document.getElementById('vVidPub');
+        vVidCam = new Af2Video();
+        vVidPub = new Af2Video();
+        var rndr = vVidCam.getRenderer();
+        rndr.style.cssText = 'width:100%;';
+        vVidCamEl.appendChild(rndr);
+        vVidNs = new Af2Video();
+        Af2System.showSettings(0);
+        $('#vToken').text(vToken);
+        $('#vViewBtn').attr('href', '/demo/lv/' + vToken);
+    });
+    $(window).blur(function () {
+        if (isPublishing === true && isMobile === true) onPub();
+    });
+    function addCam() {
+        if (isCam === true) {
+            vVidCam.attachVideo(vCam);
+            vNsPub.attachVideo(vCam);
+        }
+        $(vVidCamEl).show();
+        $(vVidPubEl).hide();
+    }
+    function removeCam() {
+        vVidCam.attachVideo(undefined);
+    }
+    function addNs() {
+        vVidPubEl.innerHTML = '';
+        var rndr = vNsPub.getRenderer();
+        rndr.style.cssText = 'width:81%;';
+        vVidPubEl.appendChild(rndr);
+        $(vVidCamEl).hide();
+        $(vVidPubEl).show();
+    }
+    function disableBtn(event0, event1) {
+        var el = $('#' + event0 + 'Btn');
+        el.text(event1);
+        el.removeClass('btn btn-style3');
+        el.addClass('btn btn-style3 disabled');
+    }
+    function enableBtn(event0, event1) {
+        var el = $('#' + event0 + 'Btn');
+        el.text(event1);
+        el.removeClass('btn btn-style3 disabled');
+        el.addClass('btn btn-style3');
+    }
+    function disableControls() {
+        isDisabled = true;
+        disableBtn('vFlipCam', 'Flip');
+        disableBtn('vLayout', 'Layout');
+        disableBtn('vMuteCam', 'Cam On');
+        disableBtn('vView', 'View');
+        if (isCam === false) disableBtn('vMuteCam', 'Cam Off');
+        disableBtn('vMuteMic', 'Mic On');
+        if (isMic === false) disableBtn('vMuteMic', 'Mic Off');
+        disableBtn('vPub', 'Publish');
+        if (isPublishing === true) disableBtn('vPub', 'Unpublish');
+        disableBtn('vScreen', 'Screen');
+        if (isScreening === true) disableBtn('vScreen', 'Unscreen');
+    }
+    function enableControls() {
+        isDisabled = false;
+        enableBtn('vFlipCam', 'Flip');
+        enableBtn('vLayout', 'Layout');
+        enableBtn('vMuteCam', 'Cam On');
+        enableBtn('vView', 'View');
+        if (isCam === false) enableBtn('vMuteCam', 'Cam Off');
+        enableBtn('vMuteMic', 'Mic On');
+        if (isMic === false) enableBtn('vMuteMic', 'Mic Off');
+        enableBtn('vPub', 'Publish');
+        if (isPublishing === true) enableBtn('vPub', 'Unpublish');
+        enableBtn('vScreen', 'Screen');
+        if (isScreening === true) enableBtn('vScreen', 'Unscreen');
+    }
+    function onLayout(event) {
+        if (event !== undefined) vLyt = event;
+        var isAspect = document.getElementById('isAspect').checked;
+        var isPip = document.getElementById('isPip').checked;
+        vNc.call('initLyt', false, { isAspect: isAspect, isPip: isPip, lyt: vLyt, });
+    }
+    function onMuteCam() {
+        if (isDisabled === true) return;
+        vNsPub.attachVideo(isCam === false ? vCam : undefined);
+        vVidCam.attachVideo(isCam === false && isPublishing === false ? vCam : undefined);
+        enableBtn('vMuteCam', isCam === false ? 'Cam On' : 'Cam Off');
+        isCam = !isCam;
+    }
+    function onMuteMic() {
+        if (isDisabled === true) return;
+        vNsPub.attachAudio(isMic === false ? vMic : undefined);
+        enableBtn('vMuteMic', isMic === false ? 'Mic On' : 'Mic Off');
+        isMic = !isMic;
+    }
+    function onCamSel(event) {
+        vCamNdx = event;
+        if (vCamNdx === vCam.index) return;
+        vCam = Af2Camera.get(vCamNdx);
+        vCam.setMode(800, 600, 30);
+        vCam.setQuality(300000);
+        vVidCam.attachVideo(isCam === true && isPublishing === false ? vCam : undefined);
+        vNsPub.attachVideo(isCam === true ? vCam : undefined);
+    }
+    function onMicSel(event) {
+        vMicNdx = event;
+        if (vMicNdx === vMic.index) return;
+        vMic = Af2Microphone.get(vMicNdx);
+        if (isMic === true) vNsPub.attachAudio(vMic);
+    }
+    function onOverlay(event) {
+        if (isDisabled === true) return;
+        vNc.call('initOverlay', true, { name: event });
+    }
+    function onPub() {
+        if (isDisabled === true) return;
+        removeCam();
+        disableControls();
+        vNsPub.publish(isPublishing === false ? vUser : false);
+    }
+    function onScreen() {
+        if (isDisabled === true) return;
+        if (isMobile === true) {
+            alert('Screen publishing is available only for desktop browsers.');
+            return;
+        }
+        var cmd = vUser + 'screen';
+        disableControls();
+        if (isScreening === true) cmd = false;
+        vNsScreen.publish(cmd, {});
+    }
+    function init() {
+        $('#initBtn').hide();
+        $('#vTop').show();
+        initNc();
+    }
+    function initInst() {
+        isPublishing = false;
+        enableBtn('vPub', 'Publish');
+        vNsPlay = new Af2NetStream(vNc);
+        vNsPlay.onStatus = function (info) {
+            console.log(info.code);
+            vVidNsPlayEl.innerHTML = '';
+            var rndr = this.getRenderer();
+            if (rndr === undefined) return;
+            rndr.controls = true;
+            rndr.style.cssText = 'width:100%;';
+            vVidNsPlayEl.appendChild(rndr);
+        };
+        vNsPub = new Af2NetStream(vNc);
+        if (isCam === true) vNsPub.attachVideo(vCam);
+        if (isMic === true) vNsPub.attachAudio(vMic);
+        vNsPub.onStatus = function (info) {
+            isPublishing = info.code === Af2Constants.AF2_NETSTREAM_PUBLISH_START;
+            if (info.code === Af2Constants.AF2_NETSTREAM_PUBLISH_START) vNc.call('initPub', true, vEntity);
+            if (info.code === Af2Constants.AF2_NETSTREAM_UNPUBLISH_SUCCESS) vNc.call('uninitPub', true, vEntity);
+        };
+        vNsScreen = new Af2NetStream(vNc);
+        vNsScreen.onStatus = function (info) {
+            console.log('screen: ' + info.code);
+            if (info.code === Af2Constants.AF2_NETSTREAM_PUBLISH_BAD_NAME) {
+                enableControls();
+                return;
+            }
+            isScreening = info.code === Af2Constants.AF2_NETSTREAM_PUBLISH_START;
+            if (info.code === Af2Constants.AF2_NETSTREAM_PUBLISH_START) vNc.call('initScreen', true, vEntityScreen);
+            if (info.code === Af2Constants.AF2_NETSTREAM_UNPUBLISH_SUCCESS) vNc.call('uninitScreen', true, vEntityScreen);
+        };
+        vSo = Af2SharedObject.get('live');
+        vSo.onSync = function (info) {
+            if (info.code !== 'change') return;
+            $('#vInfo').html('Streamers: ' + vSo.data['live']['pubs'] + ' Viewers: ' + vSo.data['live']['views']);
+        };
+        vSo.connect(vNc);
+        vSoLyt = Af2SharedObject.get('lyt');
+        vSoLyt.onSync = function (info) {
+            if (info.code !== 'change') return;
+            vLyt = vSoLyt.data['lyt']['lyt'];
+            var src = '/images/layout/';
+            var isPip = vSoLyt.data['lyt']['isPip'];
+            $('#vPip_0').attr('src', src + '0_.png');
+            $('#vPip_1').attr('src', src + '1_.png');
+            $('#vPip_2').attr('src', src + '2_.png');
+            $('#vPip_3').attr('src', src + '3_.png');
+            if (isPip === true) {
+                $('#vPip_0').attr('src', src + '0_p.png');
+                $('#vPip_1').attr('src', src + '1_p.png');
+                $('#vPip_2').attr('src', src + '2_p.png');
+                $('#vPip_3').attr('src', src + '3_p.png');
+            }
+            $('#isAspect').prop('checked', vSoLyt.data['lyt']['isAspect']);
+            $('#isPip').prop('checked', isPip);
+            $('#vLyt' + vLyt).prop('checked', true);
+        };
+        vSoLyt.connect(vNc);
+        vSoOvrl = Af2SharedObject.get('ovr');
+        vSoOvrl.onSync = function (info) {
+            if (info.code !== 'change') return;
+            var c = vSoOvrl.data['ovr'];
+            console.log(c);
+            for (var i = 0; i < 3; i++) {
+                var s0 = 'vOverlay' + i;
+                var s1 = c['status'][i] === true ? 'Overlay ' + (i + 1) : 'Unoverlay ' + (i + 1);
+                c.enabled === false ? disableBtn(s0, s1) : enableBtn(s0, s1);
+            }
+        };
+        vSoOvrl.connect(vNc);
+        enableControls();
+        setTimeout(function () {
+            if (vCam === undefined) {
+                vCam = Af2Camera.get();
+                vCam.setMode(800, 600, 30);
+                vCam.setQuality(300000);
+                vMic = Af2Microphone.get();
+                addCam();
+            }
+            vNsPlay.play('live');
+            vNc.call('initBg');
+        }, 3 * 1000);
+        if (isInited === true) return;
+        isInited = true;
+        var first = false;
+        var cams = Af2Camera.names;
+        var mics = Af2Microphone.names;
+        var html = '<span><strong>Camera</strong></span>';
+        html += '<table width="100%">';
+        for (var i in cams) {
+            html += '<tr><td><label>';
+            if (first === false) {
+                first = true;
+                html += '<input name="cam" type="radio" onChange="javascript:onCamSel(' + i + ');" checked />';
+            } else {
+                html += '<input name="cam" type="radio" onChange="javascript:onCamSel(' + i + ');" />';
+            }
+            html += ' ' + cams[i] + '</label></td></tr>';
+        }
+        html += '</table>';
+        html += '<br />';
+        html += '<span><strong>Microphone</strong></span>';
+        html += '<table width="100%">';
+        first = false;
+        for (var i in mics) {
+            html += '<tr><td><label>';
+            if (first === false) {
+                first = true;
+                html += '<input name="mic" type="radio" onChange="javascript:onMicSel(' + i + ');" checked />';
+            } else {
+                html += '<input name="mic" type="radio" onChange="javascript:onMicSel(' + i + ');" />';
+            }
+            html += ' ' + mics[i] + '</label></td></tr>';
+        }
+        html += '</table>';
+        $('#mediaTbl').html(html);
+    }
+    function initNc() {
+        disableControls();
+        isConnecting = true;
+        vNc = new Af2NetConnection();
+        vNc.onResult = function (info) {
+            switch (info.method) {
+                case 'initPub':
+                    enableControls();
+                    enableBtn('vPub', 'Unpublish');
+                    addNs();
+                    break;
+                case 'uninitPub':
+                    enableBtn('vPub', 'Publish');
+                    enableControls();
+                    addCam();
+                    break;
+                case 'initScreen':
+                    enableControls();
+                    enableBtn('vScreen', 'Unscreen');
+                    break;
+                case 'uninitScreen':
+                    enableBtn('vScreen', 'Screen');
+                    enableControls();
+                    break;
+            }
+        };
+        vNc.onStatus = function (event) {
+            isConnected = false;
+            if (event.code !== Af2Constants.AF2_NETCONNECTION_CONNECT_SUCCESS) {
+                isConnecting = false;
+                alert('No Internet connection.');
+                initNc();
+                return;
+            }
+            if (event.code === Af2Constants.AF2_NETCONNECTION_CONNECT_INVALID_APP) {
+                isConnecting = false;
+                alert('Invalid token.');
+                return;
+            }
+            isConnecting = false;
+            isConnected = true;
+            initInst();
+        };
+        vNc.connect(vUri + '/live/' + vToken, vEntity);
+    }
+</script>

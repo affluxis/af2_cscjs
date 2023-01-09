@@ -1,0 +1,119 @@
+﻿@*
+    //
+    //  Rv.cshtml
+    //  Affluxis
+    //
+    //  Created by Affluxis on 16/09/2022.
+    //  Copyright © 2022 Affluxis. All rights reserved.
+    //
+*@
+
+@using Web.Preso;
+@model PresoBase
+
+<script src="~/js/affluxis.js"></script>
+<style>
+    .box {
+        display: grid;
+        grid-template-columns: repeat(auto-fill,minmax(160px, 1fr));
+        margin: 10px;
+    }
+
+    .recthumb {
+        margin: 10px;
+    }
+</style>
+<section class="page-title-area bg-cover1">
+    <div class="page-title-wrapper section-spacing">
+        <div class="page-title text-center white-text">
+            <h1 class="heading-1">Demo Record</h1>
+        </div>
+    </div>
+</section>
+<section class="blog-area bg-color1">
+    <div class="blog-wrapper section-spacing" style="padding-top:30px;">
+        <div class="container">
+            <div class="error-page text-center">
+                <span>View audio/video recording(s) across platforms from multiple publishers. Your token is "<span id="vToken"></span>".</span>
+                <br />
+                <span id="vInfo">Recordings: 0</span>
+                <div id="vImgs" class="box"></div>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+    var isInited, isConnected, isConnecting;
+    var vNc, vSo;
+    var vEntity, vToken;
+    var vUser, vUri, vUrl;
+
+    $(function () {
+        isInited = isConnected = isConnecting = false;
+        vUri = 'ccc.affluxis.com';
+        vUrl = 'https://ccc.affluxis.com:8444/';
+        vToken = '@Model.Token';
+        vUser = Af2Base.getGuidNoDash();
+        vEntity = { name: vUser };
+        $('#vToken').text(vToken);
+        initNc();
+    });
+    function appendImg(event) {
+        var imgVid = getImgVid(event);
+        $('#vImgs').append('<div class="recthumb"><a href="' + imgVid.vid + '" target="_blank"><img src="' + imgVid.img + '" /></a></div>');
+    }
+    function prependImg(event) {
+        var imgVid = getImgVid(event);
+        $('#vImgs').prepend('<div class="recthumb"><a href="' + imgVid.vid + '" target="_blank"><img src="' + imgVid.img + '" /></a></div>');
+    }
+    function getImgVid(event) {
+        var baseUrl = vUrl + 'client2/affluxis/rec/';
+        var img = baseUrl + 'snapshots/' + vToken + '/' + event.name;
+        var vid = baseUrl + 'streams/' + vToken + '/' + event.video;
+        return { img: img, vid: vid };
+    }
+    function initInst() {
+        vSo = Af2SharedObject.get('thumbs', true);
+        vSo.onSync = function (info) {
+            if (info.code !== 'change') return;
+            thumbs = vSo.data['thumbs']['thumbs'];
+            if (thumbs.length === 0) return;
+            $('#vInfo').html('Recordings: ' + thumbs.length);
+            if (isInited === false) {
+                isInited = true;
+                thumbs.sort(compare);
+                for (var i in thumbs) appendImg(thumbs[i]);
+                return;
+            }
+            prependImg(thumbs[thumbs.length - 1]);
+        };
+        vSo.connect(vNc);
+    }
+    function initNc() {
+        isConnecting = true;
+        vNc = new Af2NetConnection();
+        vNc.onStatus = function (event) {
+            isConnected = false;
+            if (event.code !== Af2Constants.AF2_NETCONNECTION_CONNECT_SUCCESS) {
+                isConnecting = false;
+                alert('No Internet connection.');
+                initNc();
+                return;
+            }
+            if (event.code === Af2Constants.AF2_NETCONNECTION_CONNECT_INVALID_APP) {
+                isConnecting = false;
+                alert('Invalid token.');
+                return;
+            }
+            isConnecting = false;
+            isConnected = true;
+            initInst();
+        };
+        vNc.connect(vUri + '/rec/' + vToken, vEntity);
+    }
+    function compare(a, b) {
+        if (a.created > b.created) return -1;
+        if (a.created < b.created) return 1;
+        return 0;
+    }
+</script>
