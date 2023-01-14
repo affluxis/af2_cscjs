@@ -1,0 +1,91 @@
+﻿@*
+    //
+    //  Ov.cshtml
+    //  Affluxis
+    //
+    //  Created by Affluxis on 14/01/2022.
+    //  Copyright © 2022 Affluxis. All rights reserved.
+    //
+*@
+
+@using Web.Preso;
+@model PresoBase
+
+<script src="~/js/affluxis.js"></script>
+<section class="page-title-area bg-cover1">
+    <div class="page-title-wrapper section-spacing">
+        <div class="page-title text-center white-text">
+            <h1 class="heading-1">Sample Streamer</h1>
+        </div>
+    </div>
+</section>
+<section class="blog-area bg-color1">
+    <div class="blog-wrapper section-spacing" style="padding-top:30px;">
+        <div class="container">
+            <div class="error-page text-center">
+                <span>View real-time media across platforms using a desktop streaming app. Your token is "<span id="vToken"></span>".</span>
+                <br />
+                <div id="vVid"></div>
+                <br /><br />
+                <a href="/sample/opre/">< Back</a>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+    var isConnected, isConnecting;
+    var vToken;
+    var vNc, vNs, vSo, vVidNsPlayEl;
+    var vUser, vUri;
+
+    $(function () {
+        isConnected = isConnecting = false;
+        vUri = 'demo0.affluxis.com';
+        vToken = '@Model.Token';
+        vUser = Af2Base.getGuidNoDash();
+        vVidNsPlayEl = document.getElementById('vVid');
+        vVidNsPlayEl.style.cssText = 'width:100%;';
+        $('#vToken').text(vToken);
+        initNc();
+    });
+    function initInst() {
+        vNsPlay = new Af2NetStream(vNc);
+        vNsPlay.onStatus = function (info) {
+            vVidNsPlayEl.innerHTML = '';
+            var rndr = this.getRenderer();
+            if (rndr === undefined) return;
+            rndr.autoplay = rndr.controls = true;
+            rndr.style.cssText = 'width:100%;';
+            vVidNsPlayEl.appendChild(rndr);
+        };
+        vSo = Af2SharedObject.get('obs');
+        vSo.onSync = function (info) {
+            if (info.code !== 'change') return;
+            console.log(vSo.data['obs']['isObs']);
+            vNsPlay.play(vSo.data['obs']['isObs']);
+        };
+        vSo.connect(vNc);
+    }
+    function initNc() {
+        isConnecting = true;
+        vNc = new Af2NetConnection();
+        vNc.onStatus = function (event) {
+            isConnected = false;
+            if (event.code !== Af2Constants.AF2_NETCONNECTION_CONNECT_SUCCESS) {
+                isConnecting = false;
+                alert('No Internet connection.');
+                initNc();
+                return;
+            }
+            if (event.code === Af2Constants.AF2_NETCONNECTION_CONNECT_INVALID_APP) {
+                isConnecting = false;
+                alert('Invalid token.');
+                return;
+            }
+            isConnecting = false;
+            isConnected = true;
+            initInst();
+        };
+        vNc.connect(vUri + '/sample_streamer/' + vToken);
+    }
+</script>

@@ -1,0 +1,155 @@
+﻿@*
+    //
+    //  Op.cshtml
+    //  Affluxis
+    //
+    //  Created by Affluxis on 14/01/2022.
+    //  Copyright © 2022 Affluxis. All rights reserved.
+    //
+*@
+
+@using Web.Preso;
+@model PresoBase
+
+<script src="~/js/affluxis.js"></script>
+<script src="~/js/demo.js"></script>
+<section class="page-title-area bg-cover1">
+    <div class="page-title-wrapper section-spacing">
+        <div class="page-title text-center white-text">
+            <h1 class="heading-1">Sample Streamer</h1>
+        </div>
+    </div>
+</section>
+<section class="blog-area bg-color1">
+    <div class="blog-wrapper section-spacing" style="padding-top:30px;">
+        <div class="container">
+            <div class="error-page text-center">
+                <span id="initBtn">
+                    <a href="javascript:init();" class="btn-style3">Start</a>
+                    <br />
+                </span>
+                <span>Stream real-time media across platforms using a desktop streaming app. Your token is "<span id="vToken"></span>".</span>
+                <br /><br />
+                <span>OBS/Wirecast/et al</span>
+                <br />
+                <span>Address: <span id="vAddress0"></span></span>
+                <br />
+                <span>Stream: <span id="vAddress1"></span></span>
+                <br /><br />
+                <span>FFMPEG CPU</span>
+                <br />
+                <span id="vAddress2"></span>
+                <br /><br />
+                <span>FFMPEG GPU</span>
+                <br />
+                <span id="vAddress3"></span>
+                <br /><br />
+                <div class="container">
+                    <div id="vTop" style="display:none;">
+                        <table align="center">
+                            <tr>
+                                <td align="center" valign="middle">
+                                    <div id="vVidNs"></div>
+                                </td>
+                            </tr>
+                        </table>
+                        <a id="vViewBtn" href="#" target="_blank" class="btn btn-style3">View</a>
+                    </div>
+                </div>
+                <br /><br />
+                <a href="/sample/opre/">< Back</a>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+    var isConnected, isConnecting, isDisabled;
+    var vNc, vNs, vSo, vVidNs, vVidNsPlayEl;
+    var vUri, vUser;
+
+    $(function () {
+        isDisabled = isConnected = isConnecting = false;
+        vUri = 'demo0.affluxis.com';
+        vToken = '@Model.Token';
+        vUser = Af2Base.getGuidNoDash();
+        vVidNsPlayEl = document.getElementById('vVidNs');
+        vVidNs = new Af2Video();
+        var str0 = 'rtmp://demo0.affluxis.com:1935/affluxis?parameters=obs&vhost=affluxis&app=sample_streamer&inst=' + vToken + '/affluxis/';
+        var str1 = 'affluxis/sample_streamer/' + vToken + '/obs';
+        var str2 = 'ffmpeg -re -i video.mp4 ';
+        $('#vAddress0').text(str0);
+        $('#vAddress1').text(str1);
+        $('#vAddress2').text(str2 + '-c:v h264 -c:a aac -f flv ' + str0 + str1);
+        $('#vAddress3').text(str2 + '-c:v h264_nvenc -c:a aac -f flv ' + str0 + str1);
+        $('#vToken').text(vToken);
+        $('#vViewBtn').attr('href', '/sample/ov/' + vToken);
+    });
+    function disableBtn(event0, event1) {
+        var el = $('#' + event0 + 'Btn');
+        el.text(event1);
+        el.removeClass('btn btn-style3');
+        el.addClass('btn btn-style3 disabled');
+    }
+    function enableBtn(event0, event1) {
+        var el = $('#' + event0 + 'Btn');
+        el.text(event1);
+        el.removeClass('btn btn-style3 disabled');
+        el.addClass('btn btn-style3');
+    }
+    function disableControls() {
+        isDisabled = true;
+        disableBtn('vViewBtn', 'View');
+    }
+    function enableControls() {
+        isDisabled = false;
+        enableBtn('vViewBtn', 'View');
+    }
+    function init() {
+        $('#initBtn').hide();
+        $('#vTop').show();
+        initNc();
+    }
+    function initInst() {
+        vNs = new Af2NetStream(vNc);
+        vNs.onStatus = function (info) {
+            console.log(info.code);
+            vVidNsPlayEl.innerHTML = '';
+            var rndr = this.getRenderer();
+            if (rndr === undefined) return;
+            rndr.controls = true;
+            rndr.style.cssText = 'width:50%;';
+            vVidNsPlayEl.appendChild(rndr);
+        };
+        vSo = Af2SharedObject.get('obs');
+        vSo.onSync = function (info) {
+            if (info.code !== 'change') return;
+            console.log('play: ' + vSo.data['obs']['isObs']);
+            vNs.play(vSo.data['obs']['isObs']);
+        };
+        vSo.connect(vNc);
+        enableControls();
+    }
+    function initNc() {
+        disableControls();
+        isConnecting = true;
+        vNc = new Af2NetConnection();
+        vNc.onStatus = function (event) {
+            isConnected = false;
+            if (event.code !== Af2Constants.AF2_NETCONNECTION_CONNECT_SUCCESS) {
+                isConnecting = false;
+                alert('No Internet connection.');
+                initNc();
+                return;
+            }
+            if (event.code === Af2Constants.AF2_NETCONNECTION_CONNECT_INVALID_APP) {
+                isConnecting = false;
+                alert('Invalid token.');
+                return;
+            }
+            isConnecting = false;
+            isConnected = true;
+            initInst();
+        };
+        vNc.connect(vUri + '/sample_streamer/' + vToken);
+    }
+</script>
